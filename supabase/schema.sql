@@ -47,7 +47,7 @@ create table if not exists teacher_attendance (
   period_label text,                -- contoh: "Jam ke-3" atau nama mapel, opsional
   teacher_name text not null,
   status text not null check (status in ('hadir', 'tidak_hadir')),
-  reason text,                      -- diisi jika tidak_hadir: sakit/izin/dinas_luar/tanpa_keterangan/lainnya
+  reason text,                      -- diisi jika tidak_hadir: sakit/izin/dinas_luar/lainnya
   task_notes text,                  -- keterangan tugas yang diberikan jika tidak hadir
   created_at timestamptz not null default now()
 );
@@ -72,12 +72,12 @@ create table if not exists non_muslim_reports (
 
 create index if not exists idx_nonmuslim_date on non_muslim_reports (report_date);
 
--- 6. SEED DATA KELAS: 7A-7I, 8A-8I, 9A-9H -----------------------------
+-- 6. SEED DATA KELAS: 7A-7K, 8A-8I, 9A-9H -----------------------------
 insert into classes (name, grade, sort_order)
 select name, grade, sort_order from (
   values
     ('7A','7',1), ('7B','7',2), ('7C','7',3), ('7D','7',4), ('7E','7',5),
-    ('7F','7',6), ('7G','7',7), ('7H','7',8), ('7I','7',9),
+    ('7F','7',6), ('7G','7',7), ('7H','7',8), ('7I','7',9), ('7J','7',27), ('7K','7',28),
     ('8A','8',10), ('8B','8',11), ('8C','8',12), ('8D','8',13), ('8E','8',14),
     ('8F','8',15), ('8G','8',16), ('8H','8',17), ('8I','8',18),
     ('9A','9',19), ('9B','9',20), ('9C','9',21), ('9D','9',22), ('9E','9',23),

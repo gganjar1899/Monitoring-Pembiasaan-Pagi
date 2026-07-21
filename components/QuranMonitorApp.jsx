@@ -18,7 +18,6 @@ const REASON_LABELS = {
   sakit: "Sakit",
   izin: "Izin",
   dinas_luar: "Dinas Luar",
-  tanpa_keterangan: "Tanpa Keterangan",
   lainnya: "Lainnya",
 };
 
@@ -111,20 +110,9 @@ function Toast({ message }) {
   );
 }
 
-function StickyActionBar({ error, children, maxWidthClass = "max-w-xl" }) {
-  return (
-    <div className="fixed bottom-0 inset-x-0 z-40 no-print bg-cream/95 backdrop-blur border-t border-line safe-bottom">
-      <div className={`${maxWidthClass} mx-auto px-5 sm:px-0 py-3`}>
-        {error && <p className="text-sm text-crimson mb-2">{error}</p>}
-        {children}
-      </div>
-    </div>
-  );
-}
-
 function SectionCard({ title, subtitle, children }) {
   return (
-    <div className="bg-white rounded-2xl p-4 sm:p-5 border border-line shadow-sm mb-5">
+    <div className="bg-white rounded-xl p-4 border border-line mb-5">
       <h3 className="text-sm font-semibold font-display text-green-deep">{title}</h3>
       {subtitle && <p className="text-xs text-muted mb-3">{subtitle}</p>}
       <div className={subtitle ? "" : "mt-3"}>{children}</div>
@@ -160,26 +148,14 @@ export default function QuranMonitorApp() {
     return () => sub.subscription.unsubscribe();
   }, []);
 
-  const [dbNotice, setDbNotice] = useState("");
-
   const loadClasses = useCallback(async () => {
     const { data, error } = await supabase.from("classes").select("*").order("sort_order");
-    if (error) {
-      console.error("Gagal memuat kelas:", error.message);
-      setDbNotice(`Gagal memuat data dari Supabase: ${error.message}`);
-      return;
-    }
-    setClasses(data || []);
+    if (!error && data) setClasses(data);
   }, []);
 
   const loadTeachers = useCallback(async () => {
     const { data, error } = await supabase.from("teachers").select("*").order("name");
-    if (error) {
-      console.error("Gagal memuat guru:", error.message);
-      setDbNotice(`Gagal memuat data dari Supabase: ${error.message}`);
-      return;
-    }
-    setTeachers(data || []);
+    if (!error && data) setTeachers(data);
   }, []);
 
   useEffect(() => {
@@ -257,83 +233,67 @@ export default function QuranMonitorApp() {
 
   return (
     <div className="min-h-screen w-full bg-cream font-body">
-      <header className="no-print bg-gradient-to-br from-green-deep to-green text-cream">
-        <div className="max-w-5xl mx-auto px-5 sm:px-6 pt-6 sm:pt-8 pb-5">
+      <header className="border-b border-line no-print">
+        <div className="max-w-5xl mx-auto px-6 pt-8 pb-5">
           <div className="flex items-start justify-between flex-wrap gap-4">
-            <div className="flex items-start gap-3 sm:gap-4">
-              <div className="bg-cream rounded-full p-1 shrink-0 shadow-sm">
-                <img src="/logo-smpn36.jpg" alt="Logo SMP Negeri 36 Bandung" className="w-11 h-11 sm:w-14 sm:h-14 object-contain rounded-full" />
-              </div>
+            <div className="flex items-start gap-4">
+              <img src="/logo-smpn36.jpg" alt="Logo SMP Negeri 36 Bandung" className="w-14 h-14 object-contain rounded-full ring-2 ring-gold/60 shrink-0" />
               <div>
-                <p className="text-[10px] sm:text-xs tracking-widest uppercase text-gold" style={{ letterSpacing: "0.18em" }}>
-                  SMP Negeri 36 Bandung
+                <p className="text-xs tracking-widest uppercase text-gold-deep" style={{ letterSpacing: "0.18em" }}>
+                  SMP Negeri 36 Bandung — Pembiasaan Jam Pertama
                 </p>
-                <h1 className="text-2xl sm:text-4xl mt-0.5 font-display font-bold text-cream leading-tight">
+                <h1 className="text-3xl sm:text-4xl mt-1 font-display font-bold text-green-deep">
                   Monitoring Pembiasaan Pagi
                 </h1>
-                <p className="text-xs sm:text-sm mt-1 text-cream/70">{formatDateLong(selectedDate)}</p>
+                <p className="text-sm mt-1 text-muted">{formatDateLong(selectedDate)}</p>
               </div>
             </div>
-            {view !== "input" && (
-              <div className="text-right flex flex-col items-end gap-2">
-                <div>
-                  <div className="text-2xl sm:text-3xl font-semibold font-display text-cream">{doneCount}/{classes.length}</div>
-                  <p className="text-xs text-cream/70">kelas sudah lapor tilawah</p>
-                  <div className="mt-2">
-                    <TasbihProgress done={doneCount} total={classes.length} />
-                  </div>
+            <div className="text-right flex flex-col items-end gap-2">
+              <div>
+                <div className="text-3xl font-semibold font-display text-green-deep">{doneCount}/{classes.length}</div>
+                <p className="text-xs text-muted">kelas sudah lapor tilawah</p>
+                <div className="mt-2">
+                  <TasbihProgress done={doneCount} total={classes.length} />
                 </div>
               </div>
-            )}
-          </div>
-          <div className="mt-3">
-            {isPrincipal ? (
-              <button onClick={handleSignOut} className="text-xs px-3 py-1.5 rounded-full font-medium bg-cream/15 text-cream border border-cream/25">
-                Kepala Sekolah · Keluar
-              </button>
-            ) : (
-              <button onClick={() => setPendingProtectedView("dashboard")} className="text-xs px-3 py-1.5 rounded-full font-medium bg-cream text-green-deep shadow-sm">
-                Masuk Kepala Sekolah
-              </button>
-            )}
+              <div>
+                {isPrincipal ? (
+                  <button onClick={handleSignOut} className="text-xs px-3 py-1 rounded-full font-medium bg-green-soft text-green-deep">
+                    Kepala Sekolah · Keluar
+                  </button>
+                ) : (
+                  <button onClick={() => setPendingProtectedView("dashboard")} className="text-xs px-3 py-1 rounded-full font-medium bg-white border border-line text-green-deep">
+                    Masuk Kepala Sekolah
+                  </button>
+                )}
+              </div>
+            </div>
           </div>
         </div>
         <GeometricDivider />
       </header>
 
-      <nav className="sticky top-0 z-30 no-print bg-cream/95 backdrop-blur border-b border-line">
-        <div className="max-w-5xl mx-auto px-5 sm:px-6 py-3 flex gap-2 overflow-x-auto no-scrollbar">
-          {[
-            { key: "input", label: "Input Laporan Kelas" },
-            { key: "dashboard", label: "Dasbor Real-time" },
-            { key: "recap", label: "Rekap Bulanan & Semester" },
-            { key: "manage", label: "Kelola Sekolah" },
-          ].map((t) => (
-            <button
-              key={t.key}
-              onClick={() => handleNavClick(t.key)}
-              className={`shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-all active:scale-[0.97] ${
-                view === t.key ? "bg-green-deep text-cream shadow-sm" : "bg-white text-green-deep border border-line"
-              }`}
-            >
-              {t.label}
-              {protectedViews.includes(t.key) && !isPrincipal && <span className="ml-1.5 opacity-60">🔒</span>}
-            </button>
-          ))}
-        </div>
+      <nav className="max-w-5xl mx-auto px-6 pt-5 flex gap-2 flex-wrap no-print">
+        {[
+          { key: "input", label: "Input Laporan Kelas" },
+          { key: "dashboard", label: "Dasbor Real-time" },
+          { key: "recap", label: "Rekap Bulanan & Semester" },
+          { key: "manage", label: "Kelola Sekolah" },
+        ].map((t) => (
+          <button
+            key={t.key}
+            onClick={() => handleNavClick(t.key)}
+            className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+              view === t.key ? "bg-green-deep text-cream" : "bg-white text-green-deep border border-line"
+            }`}
+          >
+            {t.label}
+            {protectedViews.includes(t.key) && !isPrincipal && <span className="ml-1.5 opacity-60">🔒</span>}
+          </button>
+        ))}
       </nav>
 
-      <main className={`max-w-5xl mx-auto px-5 sm:px-6 py-6 print-area ${view === "input" ? "pb-28 sm:pb-6" : ""}`}>
-        {dbNotice && (
-          <div className="mb-5 rounded-xl border border-crimson/40 bg-crimson-soft px-4 py-3 text-sm text-crimson no-print">
-            {dbNotice}
-          </div>
-        )}
-        {!dbNotice && !loading && classes.length === 0 && (
-          <div className="mb-5 rounded-xl border border-gold/40 bg-gold-soft px-4 py-3 text-sm text-gold-deep no-print">
-            Data kelas belum ada. Pastikan <code>supabase/schema.sql</code> sudah dijalankan sepenuhnya di Supabase SQL Editor (termasuk bagian seed data kelas).
-          </div>
-        )}
+      <main className="max-w-5xl mx-auto px-6 py-6 print-area">
         {pendingProtectedView && !isPrincipal && (
           <LoginGate onCancel={() => setPendingProtectedView(null)} onSuccess={handleLoginSuccess} />
         )}
@@ -409,7 +369,7 @@ function LoginGate({ onCancel, onSuccess }) {
     const { error: signInError } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
     setChecking(false);
     if (signInError) {
-      setError(signInError.message || "Email atau kata sandi salah.");
+      setError("Email atau kata sandi salah.");
       return;
     }
     onSuccess();
@@ -428,21 +388,21 @@ function LoginGate({ onCancel, onSuccess }) {
   };
 
   return (
-    <div className="max-w-sm mx-auto bg-white rounded-2xl p-6 border border-line shadow-sm">
+    <div className="max-w-sm mx-auto bg-white rounded-xl p-6 border border-line">
       <div className="flex justify-center mb-3">
         <img src="/logo-smpn36.jpg" alt="Logo SMPN 36 Bandung" className="w-16 h-16 object-contain" />
       </div>
       <h2 className="text-xl font-semibold mb-1 text-center font-display text-green-deep">Masuk Kepala Sekolah</h2>
       <p className="text-sm text-center mb-4 text-muted">Halaman ini khusus untuk kepala sekolah memantau program.</p>
       <div className="space-y-3">
-        <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email" className="w-full px-3 py-2.5 rounded-lg border border-line text-sm" autoFocus />
-        <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} onKeyDown={(e) => e.key === "Enter" && handleSubmit()} placeholder="Kata sandi" className="w-full px-3 py-2.5 rounded-lg border border-line text-sm" />
+        <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email" className="w-full px-3 py-2 rounded-lg border border-line text-sm" autoFocus />
+        <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} onKeyDown={(e) => e.key === "Enter" && handleSubmit()} placeholder="Kata sandi" className="w-full px-3 py-2 rounded-lg border border-line text-sm" />
       </div>
       {error && <p className="text-sm mt-2 text-center text-crimson">{error}</p>}
       {info && <p className="text-sm mt-2 text-center text-green-deep">{info}</p>}
       <div className="flex gap-2 mt-4">
-        <button onClick={onCancel} className="flex-1 py-3 rounded-full text-sm font-medium bg-white border border-line text-muted active:scale-[0.98] transition-transform">Batal</button>
-        <button onClick={handleSubmit} disabled={checking || !email.trim() || !password} className="flex-1 py-3 rounded-full text-sm font-semibold bg-green-deep text-cream shadow-sm active:scale-[0.98] transition-transform disabled:opacity-70">
+        <button onClick={onCancel} className="flex-1 py-2 rounded-lg text-sm font-medium bg-white border border-line text-muted">Batal</button>
+        <button onClick={handleSubmit} disabled={checking || !email.trim() || !password} className="flex-1 py-2 rounded-lg text-sm font-medium bg-green-deep text-cream disabled:opacity-70">
           {checking ? "Memeriksa..." : "Masuk"}
         </button>
       </div>
@@ -462,7 +422,7 @@ function InputHub({ classes, teachers, selectedDate, setSelectedDate, reports, t
       <p className="text-xs mb-3 text-muted">
         Diisi oleh <span className="font-medium text-ink">ketua kelas / perwakilan kelas</span>. Tidak perlu login.
       </p>
-      <div className="flex gap-2 mb-4 overflow-x-auto no-scrollbar">
+      <div className="flex gap-2 mb-4 flex-wrap">
         {[
           { key: "tilawah", label: "Tilawah Al-Qur'an" },
           { key: "presensi", label: "Presensi Guru" },
@@ -471,7 +431,7 @@ function InputHub({ classes, teachers, selectedDate, setSelectedDate, reports, t
           <button
             key={t.key}
             onClick={() => setTab(t.key)}
-            className={`shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-all active:scale-[0.97] ${tab === t.key ? "bg-gold text-white shadow-sm" : "bg-white text-green-deep border border-line"}`}
+            className={`px-4 py-2 rounded-full text-sm font-medium ${tab === t.key ? "bg-gold text-white" : "bg-white text-green-deep border border-line"}`}
           >
             {t.label}
           </button>
@@ -570,67 +530,65 @@ function TilawahForm({ classes, teachers, selectedDate, setSelectedDate, reports
   };
 
   return (
-    <div className="max-w-xl mx-auto sm:mx-0">
-      <div className="bg-white rounded-2xl p-5 space-y-4 border border-line shadow-sm">
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <label className="text-xs font-medium text-muted">Tanggal</label>
-            <input type="date" value={selectedDate} onChange={(e) => setSelectedDate(e.target.value)} className="mt-1 w-full px-3 py-2.5 rounded-lg border border-line text-sm" />
-          </div>
-          <div>
-            <label className="text-xs font-medium text-muted">Kelas</label>
-            <select value={selectedClass} onChange={(e) => setSelectedClass(e.target.value)} className="mt-1 w-full px-3 py-2.5 rounded-lg border border-line text-sm">
-              {classes.map((c) => <option key={c.id} value={c.name}>Kelas {c.name}</option>)}
-            </select>
-          </div>
-        </div>
-
+    <div className="max-w-xl bg-white rounded-xl p-5 space-y-4 border border-line">
+      <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className="text-xs font-medium text-muted">Surat yang dibaca</label>
-          <input type="text" value={surah} onChange={(e) => setSurah(e.target.value)} placeholder="Contoh: Al-Baqarah" className="mt-1 w-full px-3 py-2.5 rounded-lg border border-line text-sm" />
+          <label className="text-xs font-medium text-muted">Tanggal</label>
+          <input type="date" value={selectedDate} onChange={(e) => setSelectedDate(e.target.value)} className="mt-1 w-full px-3 py-2 rounded-lg border border-line text-sm" />
         </div>
-
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <label className="text-xs font-medium text-muted">Rentang ayat (keterangan)</label>
-            <input type="text" value={ayatRange} onChange={(e) => setAyatRange(e.target.value)} placeholder="Contoh: ayat 10-25" className="mt-1 w-full px-3 py-2.5 rounded-lg border border-line text-sm" />
-          </div>
-          <div>
-            <label className="text-xs font-medium text-muted">Jumlah ayat (angka)</label>
-            <input type="number" min="0" value={jumlahAyat} onChange={(e) => setJumlahAyat(e.target.value)} placeholder="Contoh: 15" className="mt-1 w-full px-3 py-2.5 rounded-lg border border-line text-sm" />
-            <p className="text-[11px] mt-1 text-muted">Dipakai untuk grafik & rekap ketercapaian</p>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <label className="text-xs font-medium text-muted">Siswa hadir</label>
-            <input type="number" min="0" value={hadir} onChange={(e) => setHadir(e.target.value)} className="mt-1 w-full px-3 py-2.5 rounded-lg border border-line text-sm" />
-          </div>
-          <div>
-            <label className="text-xs font-medium text-muted">Jumlah siswa</label>
-            <input type="number" min="0" value={totalSiswa} onChange={(e) => setTotalSiswa(e.target.value)} className="mt-1 w-full px-3 py-2.5 rounded-lg border border-line text-sm" />
-          </div>
-        </div>
-
         <div>
-          <label className="text-xs font-medium text-muted">Guru yang mendampingi hari ini</label>
-          <div className="mt-1">
-            <TeacherPicker teachers={teachers} value={teacherName} onChange={setTeacherName} />
-          </div>
-        </div>
-
-        <div>
-          <label className="text-xs font-medium text-muted">Catatan / kendala (opsional)</label>
-          <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} className="mt-1 w-full px-3 py-2.5 rounded-lg border border-line text-sm" />
+          <label className="text-xs font-medium text-muted">Kelas</label>
+          <select value={selectedClass} onChange={(e) => setSelectedClass(e.target.value)} className="mt-1 w-full px-3 py-2 rounded-lg border border-line text-sm">
+            {classes.map((c) => <option key={c.id} value={c.name}>Kelas {c.name}</option>)}
+          </select>
         </div>
       </div>
 
-      <StickyActionBar error={error}>
-        <button onClick={handleSubmit} disabled={saving} className="w-full py-3.5 rounded-full text-sm font-semibold bg-green-deep text-cream shadow-sm active:scale-[0.98] transition-transform disabled:opacity-70">
-          {saving ? "Menyimpan..." : "Simpan Laporan"}
-        </button>
-      </StickyActionBar>
+      <div>
+        <label className="text-xs font-medium text-muted">Surat yang dibaca</label>
+        <input type="text" value={surah} onChange={(e) => setSurah(e.target.value)} placeholder="Contoh: Al-Baqarah" className="mt-1 w-full px-3 py-2 rounded-lg border border-line text-sm" />
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <label className="text-xs font-medium text-muted">Rentang ayat (keterangan)</label>
+          <input type="text" value={ayatRange} onChange={(e) => setAyatRange(e.target.value)} placeholder="Contoh: ayat 10-25" className="mt-1 w-full px-3 py-2 rounded-lg border border-line text-sm" />
+        </div>
+        <div>
+          <label className="text-xs font-medium text-muted">Jumlah ayat (angka)</label>
+          <input type="number" min="0" value={jumlahAyat} onChange={(e) => setJumlahAyat(e.target.value)} placeholder="Contoh: 15" className="mt-1 w-full px-3 py-2 rounded-lg border border-line text-sm" />
+          <p className="text-[11px] mt-1 text-muted">Dipakai untuk grafik & rekap ketercapaian</p>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <label className="text-xs font-medium text-muted">Siswa hadir</label>
+          <input type="number" min="0" value={hadir} onChange={(e) => setHadir(e.target.value)} className="mt-1 w-full px-3 py-2 rounded-lg border border-line text-sm" />
+        </div>
+        <div>
+          <label className="text-xs font-medium text-muted">Jumlah siswa</label>
+          <input type="number" min="0" value={totalSiswa} onChange={(e) => setTotalSiswa(e.target.value)} className="mt-1 w-full px-3 py-2 rounded-lg border border-line text-sm" />
+        </div>
+      </div>
+
+      <div>
+        <label className="text-xs font-medium text-muted">Guru yang mendampingi hari ini</label>
+        <div className="mt-1">
+          <TeacherPicker teachers={teachers} value={teacherName} onChange={setTeacherName} />
+        </div>
+      </div>
+
+      <div>
+        <label className="text-xs font-medium text-muted">Catatan / kendala (opsional)</label>
+        <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} className="mt-1 w-full px-3 py-2 rounded-lg border border-line text-sm" />
+      </div>
+
+      {error && <p className="text-sm text-crimson">{error}</p>}
+
+      <button onClick={handleSubmit} disabled={saving} className="w-full py-2.5 rounded-lg text-sm font-medium bg-green-deep text-cream disabled:opacity-70">
+        {saving ? "Menyimpan..." : "Simpan Laporan"}
+      </button>
     </div>
   );
 }
@@ -682,16 +640,16 @@ function TeacherAttendanceForm({ classes, teachers, selectedDate, setSelectedDat
   };
 
   return (
-    <div className="max-w-xl mx-auto sm:mx-0 space-y-5">
-      <div className="bg-white rounded-2xl p-5 space-y-4 border border-line shadow-sm">
+    <div className="max-w-xl space-y-5">
+      <div className="bg-white rounded-xl p-5 space-y-4 border border-line">
         <div className="grid grid-cols-2 gap-3">
           <div>
             <label className="text-xs font-medium text-muted">Tanggal</label>
-            <input type="date" value={selectedDate} onChange={(e) => setSelectedDate(e.target.value)} className="mt-1 w-full px-3 py-2.5 rounded-lg border border-line text-sm" />
+            <input type="date" value={selectedDate} onChange={(e) => setSelectedDate(e.target.value)} className="mt-1 w-full px-3 py-2 rounded-lg border border-line text-sm" />
           </div>
           <div>
             <label className="text-xs font-medium text-muted">Kelas</label>
-            <select value={selectedClass} onChange={(e) => setSelectedClass(e.target.value)} className="mt-1 w-full px-3 py-2.5 rounded-lg border border-line text-sm">
+            <select value={selectedClass} onChange={(e) => setSelectedClass(e.target.value)} className="mt-1 w-full px-3 py-2 rounded-lg border border-line text-sm">
               {classes.map((c) => <option key={c.id} value={c.name}>Kelas {c.name}</option>)}
             </select>
           </div>
@@ -699,7 +657,7 @@ function TeacherAttendanceForm({ classes, teachers, selectedDate, setSelectedDat
 
         <div>
           <label className="text-xs font-medium text-muted">Jam ke / mata pelajaran (opsional)</label>
-          <input type="text" value={periodLabel} onChange={(e) => setPeriodLabel(e.target.value)} placeholder="Contoh: Jam ke-3 / Matematika" className="mt-1 w-full px-3 py-2.5 rounded-lg border border-line text-sm" />
+          <input type="text" value={periodLabel} onChange={(e) => setPeriodLabel(e.target.value)} placeholder="Contoh: Jam ke-3 / Matematika" className="mt-1 w-full px-3 py-2 rounded-lg border border-line text-sm" />
         </div>
 
         <div>
@@ -712,8 +670,8 @@ function TeacherAttendanceForm({ classes, teachers, selectedDate, setSelectedDat
         <div>
           <label className="text-xs font-medium text-muted">Status kehadiran</label>
           <div className="flex gap-2 mt-1">
-            <button type="button" onClick={() => setStatus("hadir")} className={`flex-1 py-2.5 rounded-lg text-sm font-medium transition-colors ${status === "hadir" ? "bg-green-deep text-cream" : "bg-cream text-muted border border-line"}`}>Hadir</button>
-            <button type="button" onClick={() => setStatus("tidak_hadir")} className={`flex-1 py-2.5 rounded-lg text-sm font-medium transition-colors ${status === "tidak_hadir" ? "bg-crimson text-cream" : "bg-cream text-muted border border-line"}`}>Tidak Hadir</button>
+            <button type="button" onClick={() => setStatus("hadir")} className={`flex-1 py-2 rounded-lg text-sm font-medium ${status === "hadir" ? "bg-green-deep text-cream" : "bg-cream text-muted border border-line"}`}>Hadir</button>
+            <button type="button" onClick={() => setStatus("tidak_hadir")} className={`flex-1 py-2 rounded-lg text-sm font-medium ${status === "tidak_hadir" ? "bg-crimson text-cream" : "bg-cream text-muted border border-line"}`}>Tidak Hadir</button>
           </div>
         </div>
 
@@ -721,19 +679,25 @@ function TeacherAttendanceForm({ classes, teachers, selectedDate, setSelectedDat
           <>
             <div>
               <label className="text-xs font-medium text-muted">Alasan tidak hadir</label>
-              <select value={reason} onChange={(e) => setReason(e.target.value)} className="mt-1 w-full px-3 py-2.5 rounded-lg border border-line text-sm">
+              <select value={reason} onChange={(e) => setReason(e.target.value)} className="mt-1 w-full px-3 py-2 rounded-lg border border-line text-sm">
                 {Object.entries(REASON_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
               </select>
             </div>
             <div>
               <label className="text-xs font-medium text-muted">Keterangan tugas yang diberikan</label>
-              <textarea value={taskNotes} onChange={(e) => setTaskNotes(e.target.value)} rows={2} placeholder="Contoh: Mengerjakan LKS halaman 20-22" className="mt-1 w-full px-3 py-2.5 rounded-lg border border-line text-sm" />
+              <textarea value={taskNotes} onChange={(e) => setTaskNotes(e.target.value)} rows={2} placeholder="Contoh: Mengerjakan LKS halaman 20-22" className="mt-1 w-full px-3 py-2 rounded-lg border border-line text-sm" />
             </div>
           </>
         )}
+
+        {error && <p className="text-sm text-crimson">{error}</p>}
+
+        <button onClick={handleAdd} disabled={saving} className="w-full py-2.5 rounded-lg text-sm font-medium bg-green-deep text-cream disabled:opacity-70">
+          {saving ? "Menyimpan..." : "Tambah Catatan"}
+        </button>
       </div>
 
-      <div className="pb-24 sm:pb-0">
+      <div>
         <h3 className="text-sm font-semibold mb-2 font-display text-green-deep">
           Catatan Hari Ini — Kelas {selectedClass || "-"}
         </h3>
@@ -742,7 +706,7 @@ function TeacherAttendanceForm({ classes, teachers, selectedDate, setSelectedDat
         ) : (
           <ul className="space-y-2">
             {classEntries.map((e) => (
-              <li key={e.id} className="bg-white rounded-xl p-3 border border-line shadow-sm text-sm">
+              <li key={e.id} className="bg-white rounded-lg p-3 border border-line text-sm">
                 <div className="flex items-start justify-between gap-2">
                   <div>
                     <p className="font-medium text-ink">{e.teacher_name} {e.period_label ? `· ${e.period_label}` : ""}</p>
@@ -758,12 +722,6 @@ function TeacherAttendanceForm({ classes, teachers, selectedDate, setSelectedDat
           </ul>
         )}
       </div>
-
-      <StickyActionBar error={error}>
-        <button onClick={handleAdd} disabled={saving} className="w-full py-3.5 rounded-full text-sm font-semibold bg-green-deep text-cream shadow-sm active:scale-[0.98] transition-transform disabled:opacity-70">
-          {saving ? "Menyimpan..." : "Tambah Catatan"}
-        </button>
-      </StickyActionBar>
     </div>
   );
 }
@@ -817,65 +775,63 @@ function NonMuslimForm({ teachers, selectedDate, setSelectedDate, nonMuslim, onS
   };
 
   return (
-    <div className="max-w-xl mx-auto sm:mx-0">
-      <div className="bg-white rounded-2xl p-5 space-y-4 border border-line shadow-sm">
-        <p className="text-xs text-muted">Pencatatan kegiatan rohani untuk siswa non-muslim, dikelompokkan per tingkat.</p>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <div>
-            <label className="text-xs font-medium text-muted">Tanggal</label>
-            <input type="date" value={selectedDate} onChange={(e) => setSelectedDate(e.target.value)} className="mt-1 w-full px-3 py-2.5 rounded-lg border border-line text-sm" />
-          </div>
-          <div>
-            <label className="text-xs font-medium text-muted">Tingkat</label>
-            <select value={grade} onChange={(e) => setGrade(e.target.value)} className="mt-1 w-full px-3 py-2.5 rounded-lg border border-line text-sm">
-              <option value="7">Kelas 7</option>
-              <option value="8">Kelas 8</option>
-              <option value="9">Kelas 9</option>
-            </select>
-          </div>
-          <div>
-            <label className="text-xs font-medium text-muted">Agama</label>
-            <select value={agama} onChange={(e) => setAgama(e.target.value)} className="mt-1 w-full px-3 py-2.5 rounded-lg border border-line text-sm">
-              <option value="protestan">Kristen Protestan</option>
-              <option value="katolik">Katolik</option>
-            </select>
-          </div>
-        </div>
-
+    <div className="max-w-xl bg-white rounded-xl p-5 space-y-4 border border-line">
+      <p className="text-xs text-muted">Pencatatan kegiatan rohani untuk siswa non-muslim, dikelompokkan per tingkat.</p>
+      <div className="grid grid-cols-3 gap-3">
         <div>
-          <label className="text-xs font-medium text-muted">Materi / ayat yang dipelajari</label>
-          <input type="text" value={materi} onChange={(e) => setMateri(e.target.value)} placeholder="Contoh: Yohanes 3:1-15" className="mt-1 w-full px-3 py-2.5 rounded-lg border border-line text-sm" />
+          <label className="text-xs font-medium text-muted">Tanggal</label>
+          <input type="date" value={selectedDate} onChange={(e) => setSelectedDate(e.target.value)} className="mt-1 w-full px-3 py-2 rounded-lg border border-line text-sm" />
         </div>
-
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <label className="text-xs font-medium text-muted">Siswa hadir</label>
-            <input type="number" min="0" value={hadir} onChange={(e) => setHadir(e.target.value)} className="mt-1 w-full px-3 py-2.5 rounded-lg border border-line text-sm" />
-          </div>
-          <div>
-            <label className="text-xs font-medium text-muted">Jumlah siswa</label>
-            <input type="number" min="0" value={totalSiswa} onChange={(e) => setTotalSiswa(e.target.value)} className="mt-1 w-full px-3 py-2.5 rounded-lg border border-line text-sm" />
-          </div>
-        </div>
-
         <div>
-          <label className="text-xs font-medium text-muted">Guru pembimbing</label>
-          <div className="mt-1">
-            <TeacherPicker teachers={teachers} value={guru} onChange={setGuru} />
-          </div>
+          <label className="text-xs font-medium text-muted">Tingkat</label>
+          <select value={grade} onChange={(e) => setGrade(e.target.value)} className="mt-1 w-full px-3 py-2 rounded-lg border border-line text-sm">
+            <option value="7">Kelas 7</option>
+            <option value="8">Kelas 8</option>
+            <option value="9">Kelas 9</option>
+          </select>
         </div>
-
         <div>
-          <label className="text-xs font-medium text-muted">Catatan (opsional)</label>
-          <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} className="mt-1 w-full px-3 py-2.5 rounded-lg border border-line text-sm" />
+          <label className="text-xs font-medium text-muted">Agama</label>
+          <select value={agama} onChange={(e) => setAgama(e.target.value)} className="mt-1 w-full px-3 py-2 rounded-lg border border-line text-sm">
+            <option value="protestan">Kristen Protestan</option>
+            <option value="katolik">Katolik</option>
+          </select>
         </div>
       </div>
 
-      <StickyActionBar error={error}>
-        <button onClick={handleSubmit} disabled={saving} className="w-full py-3.5 rounded-full text-sm font-semibold bg-green-deep text-cream shadow-sm active:scale-[0.98] transition-transform disabled:opacity-70">
-          {saving ? "Menyimpan..." : "Simpan"}
-        </button>
-      </StickyActionBar>
+      <div>
+        <label className="text-xs font-medium text-muted">Materi / ayat yang dipelajari</label>
+        <input type="text" value={materi} onChange={(e) => setMateri(e.target.value)} placeholder="Contoh: Yohanes 3:1-15" className="mt-1 w-full px-3 py-2 rounded-lg border border-line text-sm" />
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <label className="text-xs font-medium text-muted">Siswa hadir</label>
+          <input type="number" min="0" value={hadir} onChange={(e) => setHadir(e.target.value)} className="mt-1 w-full px-3 py-2 rounded-lg border border-line text-sm" />
+        </div>
+        <div>
+          <label className="text-xs font-medium text-muted">Jumlah siswa</label>
+          <input type="number" min="0" value={totalSiswa} onChange={(e) => setTotalSiswa(e.target.value)} className="mt-1 w-full px-3 py-2 rounded-lg border border-line text-sm" />
+        </div>
+      </div>
+
+      <div>
+        <label className="text-xs font-medium text-muted">Guru pembimbing</label>
+        <div className="mt-1">
+          <TeacherPicker teachers={teachers} value={guru} onChange={setGuru} />
+        </div>
+      </div>
+
+      <div>
+        <label className="text-xs font-medium text-muted">Catatan (opsional)</label>
+        <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} className="mt-1 w-full px-3 py-2 rounded-lg border border-line text-sm" />
+      </div>
+
+      {error && <p className="text-sm text-crimson">{error}</p>}
+
+      <button onClick={handleSubmit} disabled={saving} className="w-full py-2.5 rounded-lg text-sm font-medium bg-green-deep text-cream disabled:opacity-70">
+        {saving ? "Menyimpan..." : "Simpan"}
+      </button>
     </div>
   );
 }
@@ -907,7 +863,7 @@ function DashboardView({ classes, reports, teacherAtt, nonMuslim, loading, selec
               {classes.map((c) => {
                 const r = reports[c.name];
                 return (
-                  <div key={c.id} className={`rounded-2xl p-4 bg-cream border ${r ? "border-green/30" : "border-line"}`}>
+                  <div key={c.id} className={`rounded-xl p-4 bg-cream border ${r ? "border-green/30" : "border-line"}`}>
                     <div className="flex items-start justify-between">
                       <h3 className="text-lg font-display font-semibold text-green-deep">Kelas {c.name}</h3>
                       <span className={`text-xs px-2 py-1 rounded-full font-medium ${r ? "bg-green-soft text-green-deep" : "bg-gold-soft text-gold-deep"}`}>
@@ -935,7 +891,7 @@ function DashboardView({ classes, reports, teacherAtt, nonMuslim, loading, selec
             {absentToday.length > 0 && (
               <ul className="space-y-2">
                 {absentToday.map((e) => (
-                  <li key={e.id} className="bg-crimson-soft rounded-xl p-3 text-sm">
+                  <li key={e.id} className="bg-crimson-soft rounded-lg p-3 text-sm">
                     <p className="font-medium text-ink">{e.teacher_name} — Kelas {e.class_name} {e.period_label ? `· ${e.period_label}` : ""}</p>
                     <p className="text-xs mt-0.5 text-crimson">{REASON_LABELS[e.reason] || e.reason}</p>
                     {e.task_notes && <p className="text-xs mt-1 text-muted italic">Tugas: {e.task_notes}</p>}
@@ -951,7 +907,7 @@ function DashboardView({ classes, reports, teacherAtt, nonMuslim, loading, selec
                 ["protestan", "katolik"].map((a) => {
                   const r = nonMuslim[`${g}:${a}`];
                   return (
-                    <div key={`${g}:${a}`} className={`rounded-2xl p-3 bg-cream border ${r ? "border-green/30" : "border-line"}`}>
+                    <div key={`${g}:${a}`} className={`rounded-xl p-3 bg-cream border ${r ? "border-green/30" : "border-line"}`}>
                       <div className="flex items-center justify-between">
                         <p className="text-sm font-medium text-green-deep">Kelas {g} · {a === "protestan" ? "Protestan" : "Katolik"}</p>
                         <span className={`text-xs px-2 py-0.5 rounded-full ${r ? "bg-green-soft text-green-deep" : "bg-gold-soft text-gold-deep"}`}>{r ? "Lapor" : "Belum"}</span>
@@ -1043,7 +999,7 @@ function RecapView({ classes, fetchRangeData, showToast }) {
     const perTeacher = {};
     attRows.filter((e) => e.status === "tidak_hadir").forEach((e) => {
       if (!perTeacher[e.teacher_name]) {
-        perTeacher[e.teacher_name] = { total: 0, sakit: 0, izin: 0, dinas_luar: 0, tanpa_keterangan: 0, lainnya: 0 };
+        perTeacher[e.teacher_name] = { total: 0, sakit: 0, izin: 0, dinas_luar: 0, lainnya: 0 };
       }
       perTeacher[e.teacher_name].total += 1;
       if (perTeacher[e.teacher_name][e.reason] != null) perTeacher[e.teacher_name][e.reason] += 1;
@@ -1109,7 +1065,7 @@ function RecapView({ classes, fetchRangeData, showToast }) {
 
       const attData = Object.entries(attendanceAgg).map(([name, v]) => ({
         Guru: name, "Total Tidak Hadir": v.total, Sakit: v.sakit, Izin: v.izin,
-        "Dinas Luar": v.dinas_luar, "Tanpa Keterangan": v.tanpa_keterangan, Lainnya: v.lainnya,
+        "Dinas Luar": v.dinas_luar, Lainnya: v.lainnya,
       }));
       const ws2 = XLSX.utils.json_to_sheet(attData.length ? attData : [{ Guru: "-", "Total Tidak Hadir": 0 }]);
       XLSX.utils.book_append_sheet(wb, ws2, "Rekap Kehadiran Guru");
@@ -1136,8 +1092,8 @@ function RecapView({ classes, fetchRangeData, showToast }) {
     <div>
       <div className="flex items-center justify-between flex-wrap gap-3 mb-4 no-print">
         <div className="flex gap-2">
-          <button onClick={() => setMode("bulanan")} className={`px-4 py-2 rounded-full text-sm font-medium shadow-sm active:scale-[0.98] transition-transform ${mode === "bulanan" ? "bg-green-deep text-cream" : "bg-white text-green-deep border border-line"}`}>Rekap Bulanan</button>
-          <button onClick={() => setMode("semester")} className={`px-4 py-2 rounded-full text-sm font-medium shadow-sm active:scale-[0.98] transition-transform ${mode === "semester" ? "bg-green-deep text-cream" : "bg-white text-green-deep border border-line"}`}>Rekap Semester</button>
+          <button onClick={() => setMode("bulanan")} className={`px-4 py-2 rounded-full text-sm font-medium ${mode === "bulanan" ? "bg-green-deep text-cream" : "bg-white text-green-deep border border-line"}`}>Rekap Bulanan</button>
+          <button onClick={() => setMode("semester")} className={`px-4 py-2 rounded-full text-sm font-medium ${mode === "semester" ? "bg-green-deep text-cream" : "bg-white text-green-deep border border-line"}`}>Rekap Semester</button>
         </div>
         <div className="flex items-center gap-2">
           {mode === "bulanan" ? (
@@ -1159,8 +1115,8 @@ function RecapView({ classes, fetchRangeData, showToast }) {
       <div className="flex items-center justify-between flex-wrap gap-3 mb-5">
         <h2 className="text-xl font-semibold font-display text-green-deep">{periodLabel}</h2>
         <div className="flex gap-2 no-print">
-          <button onClick={handleExportExcel} className="px-4 py-2.5 rounded-full text-sm font-medium bg-white border border-line text-green-deep shadow-sm active:scale-[0.98] transition-transform">Unduh Excel</button>
-          <button onClick={() => window.print()} className="px-4 py-2.5 rounded-full text-sm font-medium bg-green-deep text-cream shadow-sm active:scale-[0.98] transition-transform">Unduh PDF</button>
+          <button onClick={handleExportExcel} className="px-4 py-2 rounded-lg text-sm font-medium bg-white border border-line text-green-deep">Unduh Excel</button>
+          <button onClick={() => window.print()} className="px-4 py-2 rounded-lg text-sm font-medium bg-green-deep text-cream">Unduh PDF</button>
         </div>
       </div>
 
@@ -1337,7 +1293,7 @@ function ManageView({ classes, teachers, onClassesChanged, onTeachersChanged, sh
       <div>
         <h2 className="text-xl font-semibold mb-1 font-display text-green-deep">Kelola Daftar Kelas</h2>
         <p className="text-sm mb-4 text-muted">Tambah atau hapus kelas. Perubahan berlaku untuk semua pengguna.</p>
-        <div className="bg-white rounded-2xl p-4 border border-line shadow-sm">
+        <div className="bg-white rounded-xl p-4 border border-line">
           <div className="flex gap-2 mb-4">
             <select value={newClassGrade} onChange={(e) => setNewClassGrade(e.target.value)} className="px-3 py-2 rounded-lg border border-line text-sm">
               <option value="7">Kelas 7</option>
@@ -1345,7 +1301,7 @@ function ManageView({ classes, teachers, onClassesChanged, onTeachersChanged, sh
               <option value="9">Kelas 9</option>
             </select>
             <input type="text" value={newClassName} onChange={(e) => setNewClassName(e.target.value)} onKeyDown={(e) => e.key === "Enter" && addClass()} placeholder="Contoh: 7J" className="flex-1 px-3 py-2 rounded-lg border border-line text-sm" />
-            <button onClick={addClass} className="px-4 py-2.5 rounded-full text-sm font-medium bg-green-deep text-cream shadow-sm active:scale-[0.98] transition-transform">Tambah</button>
+            <button onClick={addClass} className="px-4 py-2 rounded-lg text-sm font-medium bg-green-deep text-cream">Tambah</button>
           </div>
           {["7", "8", "9"].map((g) => (
             <div key={g} className="mb-3">
@@ -1367,10 +1323,10 @@ function ManageView({ classes, teachers, onClassesChanged, onTeachersChanged, sh
       <div>
         <h2 className="text-xl font-semibold mb-1 font-display text-green-deep">Kelola Guru</h2>
         <p className="text-sm mb-4 text-muted">Daftar ini muncul sebagai dropdown di form input laporan (tilawah, presensi, non-muslim).</p>
-        <div className="bg-white rounded-2xl p-4 border border-line shadow-sm">
+        <div className="bg-white rounded-xl p-4 border border-line">
           <div className="flex gap-2 mb-3">
             <input type="text" value={newTeacherName} onChange={(e) => setNewTeacherName(e.target.value)} onKeyDown={(e) => e.key === "Enter" && addTeacher()} placeholder="Nama guru baru" className="flex-1 px-3 py-2 rounded-lg border border-line text-sm" />
-            <button onClick={addTeacher} className="px-4 py-2.5 rounded-full text-sm font-medium bg-green-deep text-cream shadow-sm active:scale-[0.98] transition-transform">Tambah</button>
+            <button onClick={addTeacher} className="px-4 py-2 rounded-lg text-sm font-medium bg-green-deep text-cream">Tambah</button>
           </div>
           <ul className="space-y-1.5 max-h-64 overflow-y-auto">
             {teachers.map((t) => (
